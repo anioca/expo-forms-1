@@ -14,10 +14,11 @@ import ConfiguraçãoScreen from "../screens/ConfiguraçãoScreen";
 import ChatScreens from "../screens/ChatScreens";
 import { createMaterialBottomTabNavigator } from "@react-navigation/material-bottom-tabs";
 import WelcomeScreen from "../screens/WelcomeScreen";
-
-
+import CaixaScreen from "../screens/CaixaScreen";
+import CriarCaixaScreen from "../screens/CriarCaixaScreen";
+ 
 const Stack = createNativeStackNavigator();
-
+ 
 export default function AppNavigator() {
   return (
     <NavigationContainer>
@@ -38,7 +39,7 @@ export default function AppNavigator() {
             headerShown: false,
           }}
           />
-
+ 
         <Stack.Screen
           name="EventsScreen"
           component={EventsScreen}
@@ -75,7 +76,7 @@ export default function AppNavigator() {
             title: "App",
           }}
         />
-
+ 
         <Stack.Screen
           name="EventDetails"
           component={EventDetails}
@@ -119,15 +120,29 @@ export default function AppNavigator() {
             title: "Chat",
           }}
         />
-      
-        
+         <Stack.Screen
+          name="CaixaScreen"
+          component={CaixaScreen}
+          options={{
+            title: "Caixa",
+          }}
+        />
+        <Stack.Screen
+          name="CriarCaixaScreen"
+          component={CriarCaixaScreen}
+          options={{
+            title: "CriarCaixa",
+          }}
+        />
+     
+       
       </Stack.Navigator>
     </NavigationContainer>
   );
 }
-
+ 
 const Tabs = createMaterialBottomTabNavigator();
-
+ 
 export function TabsNavigation() {
   return (
     <Tabs.Navigator>
@@ -135,3 +150,4 @@ export function TabsNavigation() {
     </Tabs.Navigator>
   );
 }
+ 

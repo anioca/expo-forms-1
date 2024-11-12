@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { Surface, Text, Button, TextInput } from 'react-native-paper';
 import { View, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
+ 
 export default function PixScreen({ navigation }) {
   const [pixAmount, setPixAmount] = useState('');
   const [transactionStatus, setTransactionStatus] = useState(null);
   const [balance, setBalance] = useState(0);
-
+ 
   useEffect(() => {
     const loadBalance = async () => {
       try {
@@ -21,10 +21,10 @@ export default function PixScreen({ navigation }) {
         console.error('Erro ao carregar o saldo:', error);
       }
     };
-
+ 
     loadBalance();
   }, []);
-
+ 
   // Função para registrar a transação no histórico
   const registerTransaction = async (amount, type) => {
     try {
@@ -34,26 +34,22 @@ export default function PixScreen({ navigation }) {
         amount,
         date: new Date().toLocaleString(),
       };
-
+ 
       // Recupera o histórico atual
       const existingTransactions = await AsyncStorage.getItem('transactions');
       let transactions = existingTransactions ? JSON.parse(existingTransactions) : [];
-
+ 
       // Adiciona a nova transação
       transactions.push(transaction);
-
+ 
       // Salva de volta no AsyncStorage
       await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
-
-      // Debug: Verifique o que está sendo salvo
-      console.log('Transação registrada:', transaction);
-      console.log('Histórico de transações atualizado:', transactions);
-
+ 
     } catch (error) {
       console.error('Erro ao registrar a transação:', error);
     }
   };
-
+ 
   const handlePixTransaction = async () => {
     const amountValue = parseFloat(pixAmount);
     if (!isNaN(amountValue) && amountValue > 0) {
@@ -62,10 +58,16 @@ export default function PixScreen({ navigation }) {
           const newBalance = balance - amountValue;
           setTransactionStatus('Pix enviado com sucesso!');
           await registerTransaction(amountValue, 'send');
-
+ 
           await AsyncStorage.setItem('balance', newBalance.toFixed(2));
           setBalance(newBalance);
           setPixAmount('');
+ 
+          // Navegar para a tela do banco após a transação
+          setTimeout(() => {
+            navigation.navigate('BankScreen'); // Volta automaticamente para BankScreen após 1 segundo
+          }, 1000);
+ 
         } catch (error) {
           setTransactionStatus('Erro ao atualizar o saldo.');
           console.error('Erro ao salvar o saldo:', error);
@@ -77,7 +79,7 @@ export default function PixScreen({ navigation }) {
       setTransactionStatus('Erro: Verifique o valor inserido.');
     }
   };
-
+ 
   return (
     <Surface style={styles.container}>
       <View style={styles.header}>
@@ -119,7 +121,7 @@ export default function PixScreen({ navigation }) {
     </Surface>
   );
 }
-
+ 
   const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -205,4 +207,4 @@ export default function PixScreen({ navigation }) {
       backgroundColor: '#a547bf',
     },
   });
-
+ 
