@@ -8,7 +8,7 @@ import AppScreen from "../screens/AppScreen";
 import EventsScreen from "../screens/EventsScreen";
 import PerfilScreen from "../screens/PerfilScreen";
 import EventDetails from "../screens/EventDetails";
-import PixScreen from "../screens/PixScreen";
+import RecberDinheiroScreen from "../screens/RecberDinheiroScreen";
 import TransferirScreen from "../screens/TransferirScreen";
 import ConfiguraçãoScreen from "../screens/ConfiguraçãoScreen";
 import ChatScreens from "../screens/ChatScreens";
@@ -16,7 +16,8 @@ import { createMaterialBottomTabNavigator } from "@react-navigation/material-bot
 import WelcomeScreen from "../screens/WelcomeScreen";
 import CaixaScreen from "../screens/CaixaScreen";
 import CriarCaixaScreen from "../screens/CriarCaixaScreen";
- 
+import CaixaDetailsScreen from "../screens/CaixaDetailsScreen";
+import TermsScreen from "../screens/TermsScreen";
 const Stack = createNativeStackNavigator();
  
 export default function AppNavigator() {
@@ -92,10 +93,10 @@ export default function AppNavigator() {
           }}
         />
         <Stack.Screen
-          name="PixScreen"
-          component={PixScreen}
+          name="RecberDinheiroScreen"
+          component={RecberDinheiroScreen}
           options={{
-            title: "Pix",
+            title: "RecberDinheiroScreen",
           }}
         />
        
@@ -128,10 +129,25 @@ export default function AppNavigator() {
           }}
         />
         <Stack.Screen
+          name="TermsScreen"
+          component={TermsScreen}
+          options={{
+            headerShown: false,
+          }}
+        />
+
+        <Stack.Screen
           name="CriarCaixaScreen"
           component={CriarCaixaScreen}
           options={{
             title: "CriarCaixa",
+          }}
+        />
+         <Stack.Screen
+          name="CaixaDetailsScreen"
+          component={CaixaDetailsScreen}
+          options={{
+            title: "DetailsCaixa",
           }}
         />
      

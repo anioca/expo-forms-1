@@ -203,29 +203,37 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 20,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#f8f8f8",
   },
   header: {
     textAlign: "center",
     marginBottom: 20,
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#a547bf", // Título "Configurações" roxo
   },
   section: {
     marginBottom: 20,
     backgroundColor: "#fff",
-    borderRadius: 10,
+    borderRadius: 15,
     elevation: 3,
+    padding: 20,
   },
   sectionTitle: {
     marginBottom: 10,
     fontSize: 18,
     fontWeight: "bold",
+    color: "#a547bf", // Títulos "Atualizar Perfil" e "Alterar Senha" roxos
   },
   input: {
-    marginBottom: 10,
+    marginBottom: 15,
+    backgroundColor: "#f1f1f1",
+    borderRadius: 10,
   },
   buttonPrimary: {
-    backgroundColor: "#a547bf",
+    backgroundColor: "#a547bf",  // Cor roxa para os botões
     marginTop: 10,
+    borderRadius: 10,
   },
 });
 

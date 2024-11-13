@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Button, Surface, Text, Card, IconButton } from 'react-native-paper';
@@ -81,13 +80,11 @@ export default function HomeScreen({ navigation }) {
               <Card.Title
                 title={event.title}
                 subtitle={event.subtitle}
-                left={(props) => (
-                  <IconButton {...props} icon={event.icon} style={styles.cardIcon} />
-                )}
               />
               <Card.Content>
                 <Text style={styles.eventDate}>{event.date}</Text>
-                <Text style={styles.eventDescription}>{event.description}</Text>
+                {/* Exibindo uma descrição resumida do evento */}
+                <Text style={styles.eventDescription}>{event.description.substring(0, 100)}...</Text>
               </Card.Content>
               <Card.Actions>
                 <Button
@@ -197,9 +194,6 @@ const styles = StyleSheet.create({
   eventDescription: {
     fontSize: 16,
     color: '#333',
-  },
-  cardIcon: {
-    alignSelf: 'center',
   },
   footer: {
     width: '100%',

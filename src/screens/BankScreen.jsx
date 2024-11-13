@@ -6,7 +6,7 @@ import { useFocusEffect } from '@react-navigation/native';
 
 export default function BankScreen({ navigation }) {
   const [balance, setBalance] = useState(1356.00);
-  const [transactions, setTransactions] = useState([]); // Armazenar o histórico de transações
+  const [transactions, setTransactions] = useState([]);
 
   const loadBalance = async () => {
     const storedBalance = await AsyncStorage.getItem('balance');
@@ -26,20 +26,14 @@ export default function BankScreen({ navigation }) {
     }
   };
 
-  const registerTransaction = async (amount, type, boxName, isInitial = false) => {
+  const registerTransaction = async (amount, type, source) => {
     try {
       const currentDate = new Date().toLocaleString();
-      const transactionDescription =
-        type === 'add'
-          ? `Guardado na caixinha ${boxName}`
-          : `Retirado da caixinha ${boxName}`;
-
       const newTransaction = {
         amount: parseFloat(amount),
         type,
-        description: transactionDescription,
+        source,
         date: currentDate,
-        isInitial, // Marca se é a transação inicial da caixinha
       };
 
       const storedTransactions = await AsyncStorage.getItem('transactions');
@@ -47,6 +41,7 @@ export default function BankScreen({ navigation }) {
       transactions.push(newTransaction);
 
       await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
+      setTransactions(transactions);
     } catch (error) {
       console.error('Erro ao registrar transação:', error);
     }
@@ -59,86 +54,22 @@ export default function BankScreen({ navigation }) {
     }, [])
   );
 
-  const renderTransactionItem = ({ item }) => (
-    <View style={styles.transactionItem}>
-      <View style={styles.transactionDetails}>
-        <Text style={styles.transactionText}>{item.description}</Text>
-        <Text style={styles.transactionDate}>{item.date}</Text>
+  const renderTransactionItem = ({ item }) => {
+    const isBoxTransaction = item.source === 'caixa';
+    const amountColor = isBoxTransaction ? '#800080' : item.type === 'add' ? '#388e3c' : '#d32f2f';
+    const sign = item.type === 'add' ? '+' : '-';
+
+    return (
+      <View style={styles.transactionItem}>
+        <View style={styles.transactionDetails}>
+          <Text style={styles.transactionText}>{item.source === 'caixa' ? 'Caixinha' : 'Pix'}</Text>
+          <Text style={styles.transactionDate}>{item.date}</Text>
+        </View>
+        <Text style={[styles.transactionAmount, { color: amountColor }]}>
+          {sign} R$ {item.amount.toFixed(2)}
+        </Text>
       </View>
-      <Text
-        style={
-          item.type === 'add'
-            ? item.isInitial
-              ? styles.transactionAmountInitial // Cor Amarela para caixinha
-              : styles.transactionAmountReceived
-            : styles.transactionAmountSent
-        }
-      >
-        {item.type === 'add' ? `+ R$ ${item.amount.toFixed(2)}` : `- R$ ${item.amount.toFixed(2)}`}
-      </Text>
-    </View>
-  );
-
-  const handleCreateBox = async (amount) => {
-    if (!amount || isNaN(amount)) {
-      alert('Digite um valor válido para a criação da caixinha.');
-      return;
-    }
-
-    // Adiciona o valor à caixinha e ao saldo
-    const updatedBalance = balance - parseFloat(amount); // Retira do saldo
-    setBalance(updatedBalance);
-    await AsyncStorage.setItem('balance', updatedBalance.toString());
-
-    // Registra a transação de criação da caixinha
-    await registerTransaction(amount, 'subtract', 'Caixinha', true);
-
-    // Atualiza o histórico de transações com a criação da caixinha
-    const newTransaction = {
-      amount: parseFloat(amount),
-      type: 'subtract',
-      description: 'Caixinha criada com valor',
-      date: new Date().toLocaleString(),
-      isInitial: true, // Marca como transação inicial (criação da caixinha)
-    };
-
-    const storedTransactions = await AsyncStorage.getItem('transactions');
-    const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
-    transactions.push(newTransaction);
-    await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
-  };
-
-  const handleWithdrawAmount = async (amount) => {
-    if (!amount || isNaN(amount)) {
-      alert('Digite um valor válido para retirar.');
-      return;
-    }
-
-    if (balance < parseFloat(amount)) {
-      alert('Saldo insuficiente.');
-      return;
-    }
-
-    // Retira o valor do saldo e registra a transação
-    const updatedBalance = balance + parseFloat(amount); // Adiciona ao saldo quando retira
-    setBalance(updatedBalance);
-    await AsyncStorage.setItem('balance', updatedBalance.toString());
-
-    // Registra a transação de retirar valor da caixinha
-    await registerTransaction(amount, 'add', 'Caixinha');
-
-    // Atualiza o histórico de transações
-    const newTransaction = {
-      amount: parseFloat(amount),
-      type: 'add',
-      description: 'Valor retirado da caixinha',
-      date: new Date().toLocaleString(),
-    };
-
-    const storedTransactions = await AsyncStorage.getItem('transactions');
-    const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
-    transactions.push(newTransaction);
-    await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
+    );
   };
 
   return (
@@ -173,7 +104,7 @@ export default function BankScreen({ navigation }) {
           <Button
             mode="contained"
             icon="arrow-right-bold"
-            onPress={() => navigation.navigate('TransferirScreen')}
+            onPress={() => navigation.navigate('PixScreen')}
             style={styles.actionButton}
           >
             Transferir
@@ -186,9 +117,9 @@ export default function BankScreen({ navigation }) {
             <Text style={styles.noTransactionsText}>Nenhuma transação encontrada.</Text>
           ) : (
             <FlatList
-              data={[...transactions].reverse()} // Inverte a ordem das transações
+              data={[...transactions].reverse()}
               renderItem={renderTransactionItem}
-              keyExtractor={(item, index) => index.toString()} // Usa o índice como chave
+              keyExtractor={(item, index) => index.toString()}
             />
           )}
         </View>
@@ -289,19 +220,8 @@ const styles = StyleSheet.create({
     color: '#888',
     marginTop: 2,
   },
-  transactionAmountSent: {
+  transactionAmount: {
     fontSize: 16,
-    color: '#d32f2f',
-    fontWeight: 'bold',
-  },
-  transactionAmountReceived: {
-    fontSize: 16,
-    color: '#388e3c',
-    fontWeight: 'bold',
-  },
-  transactionAmountInitial: {
-    fontSize: 16,
-    color: '#ffeb3b', // Amarelo para caixinha
     fontWeight: 'bold',
   },
   noTransactionsText: {
@@ -309,22 +229,5 @@ const styles = StyleSheet.create({
     color: '#888',
     textAlign: 'center',
     marginTop: 10,
-  },
-  footer: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    position: 'absolute',
-    bottom: 0,
-    padding: 10,
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#cccccc',
-  },
-  footerButton: {
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    flex: 1,
-    marginHorizontal: 5,
   },
 });

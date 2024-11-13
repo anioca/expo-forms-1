@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, ScrollView, StyleSheet, TouchableOpacity, Alert, TextInput } from "react-native";
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  TextInput,
+  Modal,
+  TouchableWithoutFeedback,
+} from "react-native";
 import { Button, Title, Paragraph, IconButton, Card } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
@@ -16,8 +25,10 @@ const PerfilScreen = () => {
   const [email, setEmail] = useState(auth.currentUser?.email || "");
   const [recentPhotos, setRecentPhotos] = useState([]);
   const [aboutText, setAboutText] = useState("");
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null); // Estado para imagem selecionada
+  const [selectedIndex, setSelectedIndex] = useState(null); // Índice da imagem selecionada
 
-  // Carregar dados do usuário e "Sobre" sempre que a tela for focada
   useFocusEffect(
     React.useCallback(() => {
       const loadUserData = async () => {
@@ -50,38 +61,27 @@ const PerfilScreen = () => {
     }, [])
   );
 
-  // Solicitar permissão para acessar a galeria
-  useEffect(() => {
-    const requestPermission = async () => {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert("Permissão necessária", "É necessário permitir o acesso à galeria para mudar a foto de perfil.");
-      }
-    };
-    requestPermission();
-  }, []);
-
-  // Função para escolher a imagem da galeria e salvar no AsyncStorage
-  const pickImage = async () => {
+  const saveAboutText = async () => {
     try {
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 1,
-      });
-
-      if (!result.canceled) {
-        const selectedImageUri = result.assets[0].uri;
-        setProfileImage(selectedImageUri);
-        await AsyncStorage.setItem("profileImage", selectedImageUri);
-      }
+      await AsyncStorage.setItem("aboutText", aboutText);
+      Alert.alert("Informação salva!", "As informações do 'Sobre' foram atualizadas.");
     } catch (error) {
-      console.error("Erro ao acessar a galeria:", error);
+      console.error("Erro ao salvar o texto do 'Sobre':", error);
     }
   };
 
-  // Função para adicionar fotos ao Recent Photos
+  const openImageModal = (uri, index) => {
+    setSelectedImage(uri);  // Define a imagem selecionada
+    setSelectedIndex(index); // Define o índice da imagem selecionada
+    setIsModalVisible(true); // Abre o modal com a imagem ampliada
+  };
+
+  const closeImageModal = () => {
+    setSelectedImage(null); // Limpa a imagem selecionada
+    setSelectedIndex(null); // Limpa o índice da imagem selecionada
+    setIsModalVisible(false); // Fecha o modal
+  };
+
   const addRecentPhoto = async () => {
     try {
       let result = await ImagePicker.launchImageLibraryAsync({
@@ -91,10 +91,9 @@ const PerfilScreen = () => {
       });
 
       if (!result.canceled) {
-        const newPhotos = result.assets.map(asset => asset.uri);
+        const newPhotos = result.assets.map((asset) => asset.uri);
         const updatedPhotos = [...recentPhotos, ...newPhotos];
-        
-        // Limite de 5 fotos no "Recent Photos"
+
         if (updatedPhotos.length > 5) {
           updatedPhotos.splice(0, updatedPhotos.length - 5);
         }
@@ -107,20 +106,45 @@ const PerfilScreen = () => {
     }
   };
 
-  // Função para salvar o texto do "Sobre"
-  const saveAboutText = async () => {
-    try {
-      await AsyncStorage.setItem("aboutText", aboutText);
-      Alert.alert("Informação salva!", "As informações do 'Sobre' foram atualizadas.");
-    } catch (error) {
-      console.error("Erro ao salvar o texto do 'Sobre':", error);
+  const changeRecentPhoto = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const updatedPhotos = [...recentPhotos];
+      updatedPhotos[selectedIndex] = result.assets[0].uri;
+      setRecentPhotos(updatedPhotos);
+      await AsyncStorage.setItem("recentPhotos", JSON.stringify(updatedPhotos));
+    }
+  };
+
+  const deleteRecentPhoto = async () => {
+    const updatedPhotos = [...recentPhotos];
+    updatedPhotos.splice(selectedIndex, 1); // Remove a foto selecionada
+    setRecentPhotos(updatedPhotos);
+    await AsyncStorage.setItem("recentPhotos", JSON.stringify(updatedPhotos));
+    setIsModalVisible(false); // Fecha o modal após exclusão
+  };
+
+  const changeProfileImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const selectedUri = result.assets[0].uri;
+      setProfileImage(selectedUri);
+      await AsyncStorage.setItem("profileImage", selectedUri);
     }
   };
 
   return (
     <ScrollView style={styles.container}>
       <View style={styles.profileHeader}>
-        <TouchableOpacity onPress={pickImage}>
+        <TouchableOpacity onPress={() => openImageModal(profileImage, null)}>
           {profileImage ? (
             <Image source={{ uri: profileImage }} style={styles.profileImage} />
           ) : (
@@ -165,7 +189,9 @@ const PerfilScreen = () => {
         <Card.Content>
           <View style={styles.gallery}>
             {recentPhotos.map((uri, index) => (
-              <Image key={index} source={{ uri }} style={styles.galleryImage} />
+              <TouchableOpacity key={index} onPress={() => openImageModal(uri, index)}>
+                <Image source={{ uri }} style={styles.galleryImage} />
+              </TouchableOpacity>
             ))}
           </View>
           <Button mode="contained" onPress={addRecentPhoto} style={styles.addPhotoButton}>
@@ -173,6 +199,49 @@ const PerfilScreen = () => {
           </Button>
         </Card.Content>
       </Card>
+
+      {/* Modal para exibir imagem ampliada */}
+      <Modal
+        transparent={true}
+        visible={isModalVisible}
+        animationType="fade"
+        onRequestClose={closeImageModal}
+      >
+        <TouchableWithoutFeedback onPress={closeImageModal}>
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContent}>
+              <Image source={{ uri: selectedImage }} style={styles.modalImage} />
+              {selectedIndex !== null && (
+                <>
+                  <Button
+                    mode="contained"
+                    onPress={changeRecentPhoto}
+                    style={styles.changeProfileButton}
+                  >
+                    Trocar Foto
+                  </Button>
+                  <Button
+                    mode="contained"
+                    onPress={deleteRecentPhoto}
+                    style={styles.deletePhotoButton}
+                  >
+                    Apagar Foto
+                  </Button>
+                </>
+              )}
+              {selectedIndex === null && (
+                <Button
+                  mode="contained"
+                  onPress={changeProfileImage}
+                  style={styles.changeProfileButton}
+                >
+                  Trocar Foto do Perfil
+                </Button>
+              )}
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </ScrollView>
   );
 };
@@ -181,67 +250,108 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#f8f8f8",
   },
   profileHeader: {
     alignItems: "center",
     marginBottom: 20,
+    position: "relative",
   },
   profileImage: {
-    borderRadius: 75,
-    width: 150,
-    height: 150,
+    borderRadius: 80,
+    width: 160,
+    height: 160,
     marginBottom: 15,
+    borderWidth: 4,
+    borderColor: "#a547bf",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
   },
   username: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "bold",
+    color: "#333",
   },
   bio: {
     color: "#888",
     fontStyle: "italic",
     marginBottom: 20,
   },
+  changeProfileButton: {
+    backgroundColor: "#a547bf",
+    borderRadius: 30,
+    marginTop: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
+  deletePhotoButton: {
+    backgroundColor: "#f44336", // Cor vermelha para exclusão
+    borderRadius: 30,
+    marginTop: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
   infoSection: {
-    marginBottom: 20,
+    marginBottom: 25,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
   },
   sectionTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
+    color: "#333",
   },
   aboutInput: {
-    backgroundColor: "#333",
-    color: "#fff",
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 10,
+    backgroundColor: "#f4f4f4",
+    color: "#333",
+    padding: 12,
+    borderRadius: 15,
+    marginBottom: 15,
+    height: 100,
   },
   saveButton: {
     backgroundColor: "#a547bf",
+    borderRadius: 30,
+    marginTop: 12,
   },
   gallerySection: {
-    marginBottom: 20,
+    marginBottom: 25,
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    padding: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
   },
   gallery: {
     flexDirection: "row",
-    justifyContent: "space-around",
+    justifyContent: "space-between",
     flexWrap: "wrap",
+    marginBottom: 15,
   },
   galleryImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 10,
+    width: 110,
+    height: 110,
+    borderRadius: 15,
     margin: 5,
   },
   settingsButtonContainer: {
     position: "absolute",
-    top: 22,
+    top: 20,
     right: 20,
   },
   settingsButton: {
     backgroundColor: "#fff",
-    padding: 8,
-    borderRadius: 5,
+    padding: 10,
+    borderRadius: 50,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -249,7 +359,26 @@ const styles = StyleSheet.create({
   },
   addPhotoButton: {
     backgroundColor: "#a547bf",
-    marginTop: 10,
+    marginTop: 15,
+    borderRadius: 30,
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.8)", // Fundo com opacidade para simular desfoque
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "80%", // Ajustando a largura para não deixar a borda branca
+    padding: 0,   // Removendo qualquer preenchimento
+    backgroundColor: "transparent", // Fundo transparente
+    alignItems: "center",
+  },
+  modalImage: {
+    width: "100%", // A imagem ocupa toda a largura do modal
+    height: undefined, // Não fixa a altura
+    aspectRatio: 1, // Mantém a proporção da imagem
+    borderRadius: 15, // Borda suave
   },
 });
 

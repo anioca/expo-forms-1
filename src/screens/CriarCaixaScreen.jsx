@@ -1,81 +1,73 @@
 import React, { useState } from 'react';
-import { Surface, Text, Button, TextInput } from 'react-native-paper';
-import { View, StyleSheet, KeyboardAvoidingView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
- 
+
 export default function CriarCaixaScreen({ navigation }) {
   const [boxName, setBoxName] = useState('');
-  const [boxAmount, setBoxAmount] = useState('');
-  const [boxDescription, setBoxDescription] = useState('');
- 
-  const createBox = async () => {
-    if (!boxName || !boxAmount) {
-      alert('Preencha todos os campos!');
+
+  const handleCreateBox = async () => {
+    if (!boxName) {
+      alert('Digite um nome para a caixinha.');
       return;
     }
- 
-    const newBox = {
-      id: Math.random().toString(),
-      name: boxName,
-      description: boxDescription,
-      amount: parseFloat(boxAmount),
-      image: 'https://via.placeholder.com/50', // Pode ser alterado para outra imagem
-    };
- 
-    try {
-      const storedBoxes = await AsyncStorage.getItem('boxes');
-      const updatedBoxes = storedBoxes ? JSON.parse(storedBoxes).concat(newBox) : [newBox];
-      await AsyncStorage.setItem('boxes', JSON.stringify(updatedBoxes));
-      navigation.goBack(); // Volta para a tela anterior
-    } catch (error) {
-      console.error('Erro ao salvar a caixinha:', error);
-    }
+
+    const storedBoxes = await AsyncStorage.getItem('boxes');
+    const boxes = storedBoxes ? JSON.parse(storedBoxes) : [];
+
+    const newBox = { name: boxName, id: Date.now().toString() };
+    boxes.push(newBox);
+
+    await AsyncStorage.setItem('boxes', JSON.stringify(boxes));
+
+    alert(`Caixinha ${boxName} criada com sucesso!`);
+    navigation.goBack();
   };
- 
+
   return (
-    <Surface style={styles.container}>
-      <KeyboardAvoidingView behavior="padding">
-        <TextInput
-          label="Nome da Caixinha"
-          value={boxName}
-          onChangeText={setBoxName}
-          style={styles.input}
-        />
-        <TextInput
-          label="Descrição"
-          value={boxDescription}
-          onChangeText={setBoxDescription}
-          style={styles.input}
-        />
-        <TextInput
-          label="Valor Inicial (R$)"
-          value={boxAmount}
-          onChangeText={setBoxAmount}
-          keyboardType="numeric"
-          style={styles.input}
-        />
- 
-        <Button mode="contained" onPress={createBox} style={styles.createButton}>
-          Criar Caixinha
-        </Button>
-      </KeyboardAvoidingView>
-    </Surface>
+    <View style={styles.container}>
+      <Text style={styles.label}>Nome da Caixinha:</Text>
+      <TextInput
+        style={styles.input}
+        value={boxName}
+        onChangeText={setBoxName}
+      />
+      <TouchableOpacity onPress={handleCreateBox} style={styles.createBoxButton}>
+        <Text style={styles.createBoxText}>Criar Caixinha</Text>
+      </TouchableOpacity>
+    </View>
   );
 }
- 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     padding: 20,
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  label: {
+    fontSize: 18,
+    marginBottom: 15,
+    color: '#333',
   },
   input: {
-    marginBottom: 10,
-    backgroundColor: '#fff',
-  },
-  createButton: {
-    backgroundColor: '#6200ee',
-    marginTop: 20,
+    height: 45,
+    borderColor: '#ccc',
+    borderWidth: 1,
     borderRadius: 8,
+    marginBottom: 20,
+    paddingLeft: 10,
+    fontSize: 16,
+  },
+  createBoxButton: {
+    backgroundColor: '#a445bd',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  createBoxText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
 });

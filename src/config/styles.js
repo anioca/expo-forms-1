@@ -2,16 +2,20 @@ import { StyleSheet } from "react-native";
 
 export const styles = StyleSheet.create({
   container: {
-    height: "100%",
+    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#a547bf",
   },
   innerContainer: {
-    paddingHorizontal: 20,
-    alignSelf: "stretch",
-    backgroundColor: "#a547bf",
-    justifyContent: "center",
+    width: "90%",
+    padding: 20,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
     alignItems: "center",
   },
   background: {
@@ -26,11 +30,15 @@ export const styles = StyleSheet.create({
     backgroundColor: "#d9d9d9",
     width: "100%",
     color: "black",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
   img: {
     alignItems: "center",
-    width: "500%",
-    height: 500,
+    width: "100%",
+    height: 250,
+    resizeMode: "contain",
   },
   ContainerForm: {
     flex: 1,
@@ -38,15 +46,6 @@ export const styles = StyleSheet.create({
     borderTopRightRadius: 0,
     width: "100%",
     paddingHorizontal: 60,
-    backgroundColor: "#FFF",
-    alignItems: "center",
-  },
-  ContainerForm1: {
-    flex: 1,
-    borderTopLeftRadius: 50,
-    borderTopRightRadius: 0,
-    width: "100%",
-    paddingHorizontal: 80,
     backgroundColor: "#FFF",
     alignItems: "center",
   },
@@ -113,5 +112,46 @@ export const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 10,
     textDecorationLine: "underline",
+  },
+  socialLoginContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 15,
+  },
+  termsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 15,
+  },
+  termsText: {
+    fontSize: 12,
+    color: "#6C4DBE",
+  },
+  loginLink: {
+    marginTop: 20,
+    textAlign: "center",
+    color: "#4E0D8A",
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "bold",
+    color: "#a767c6", // Cor roxa para o título
+  },
+  inputContainer: {
+    backgroundColor: "#F1F1F1",
+    borderRadius: 10,
+    marginVertical: 8,
+  },
+  button: {
+    backgroundColor: "#a547bf", // Cor roxa para os botões
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: "center",
+    width: "80%",
+    marginBottom: 20,
   },
 });

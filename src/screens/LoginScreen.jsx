@@ -1,22 +1,16 @@
-import { useState } from "react";
-import { View, TouchableOpacity, Alert } from "react-native";
-import { Button, Surface, Text, TextInput } from "react-native-paper";
-import { styles } from "../config/styles";
+import React, { useState } from "react";
+import { View, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { Button, Text, TextInput } from "react-native-paper";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { FontAwesome } from 'react-native-vector-icons';
 import { auth } from "../config/firebase";
-
+ 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
-  const [erro, setErro] = useState({
-    email: false,
-    senha: false,
-  });
-
+  const [erro, setErro] = useState({ email: false, senha: false });
+ 
   async function realizaLogin() {
-    console.log("Fazer Login");
-
     if (email === "") {
       setErro({ ...erro, email: true });
       return;
@@ -25,91 +19,123 @@ export default function LoginScreen({ navigation }) {
       setErro({ ...erro, senha: true });
       return;
     }
-
+ 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, senha);
       const user = userCredential.user;
-      console.log("Usuário logado:", user);
-      navigation.navigate("HomeScreen"); // Navegar para a HomeScreen após o login
+      navigation.navigate("HomeScreen");
     } catch (error) {
-      console.error("Erro ao fazer login:", error.message);
-      Alert.alert("Erro de Login", "Não foi possível fazer login. Verifique suas credenciais.");
+      Alert.alert("Erro de Login", "Verifique suas credenciais.");
     }
   }
-
+ 
   async function handleGoogleLogin() {
     const provider = new GoogleAuthProvider();
-
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      console.log("Usuário logado com Google:", user);
-      navigation.navigate("HomeScreen"); // Navegar para a HomeScreen após login com Google
+      navigation.navigate("HomeScreen");
     } catch (error) {
-      console.error("Erro ao fazer login com Google:", error.message);
-      Alert.alert("Erro de Login com Google", "Não foi possível fazer login com sua conta Google.");
+      Alert.alert("Erro de Login com Google", "Não foi possível logar.");
     }
   }
-
+ 
   return (
-    <Surface style={styles.container}>
-      <View style={styles.Containerlogo}>
-        {}
-        <div>
-          <img
-            src="assets/img/logo1.png"
-            style={{ textAlign: "center" }}
-            width={"100%"}
-            alt="logo"
-          />
-        </div>
-      </View>
-
+    <View style={styles.background}>
       <View style={styles.ContainerForm}>
-        <Text
-          variant="headlineMedium"
-          style={{ textAlign: "center", marginBottom: 20, marginTop:50  }}
-        >
-          Login
-        </Text>
+        <Text style={styles.title}>Login</Text>
         <TextInput
-          placeholder="Digite seu e-mail"
+          placeholder="Email"
           onChangeText={setEmail}
           value={email}
           style={styles.input}
           error={erro.email}
         />
         <TextInput
-          placeholder="Digite sua senha"
+          placeholder="Password"
           onChangeText={setSenha}
           value={senha}
           secureTextEntry
           style={styles.input}
           error={erro.senha}
         />
-        <View>
-          <Button
-            onPress={realizaLogin}
-            mode="contained"
-            style={{ backgroundColor: "#a547bf" }}
-          >
-            Fazer Login
-          </Button>
+        <Button onPress={realizaLogin} mode="contained" style={styles.button}>
+          Proceed
+        </Button>
+ 
+        <Text style={styles.socialText}>Or Log In With</Text>
+ 
+        <View style={styles.socialContainer}>
+          <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin}>
+            <FontAwesome name="google" size={24} color="#DB4437" />
+          </TouchableOpacity>
         </View>
-
-        <View>
-      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleLogin}>
-        <FontAwesome name="google" size={24} color="#8a0b07" />
-      </TouchableOpacity>
-        </View>
-
-        <Button
-          onPress={() => navigation.navigate("RegisterScreen")}
-          style={{ color: "#a547bf", marginTop: 20 }}
-        >
-          Faça seu cadastro
+ 
+        <Button onPress={() => navigation.navigate("RegisterScreen")} style={styles.registerButton}>
+          Create Account
         </Button>
       </View>
-    </Surface>
+    </View>
   );
 }
+ 
+const styles = StyleSheet.create({
+  background: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#a767c6', // Cor de fundo principal
+  },
+  ContainerForm: {
+    width: '90%',
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+    color: '#a767c6',
+  },
+  input: {
+    marginBottom: 15,
+    backgroundColor: '#f3f3f3',
+  },
+  button: {
+    marginTop: 10,
+    backgroundColor: '#a767c6',
+  },
+  socialText: {
+    textAlign: 'center',
+    marginVertical: 15,
+    fontSize: 16,
+    color: '#555',
+  },
+  socialContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  socialButton: {
+    backgroundColor: '#fff',
+    padding: 10,
+    borderRadius: 50,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.2,
+    shadowRadius: 1.41,
+    elevation: 2,
+  },
+  registerButton: {
+    marginTop: 10,
+    textAlign: 'center',
+    color: '#6a0dad',
+  },
+});
+ 

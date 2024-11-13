@@ -1,18 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Surface, Text, Button, TextInput } from 'react-native-paper';
 import { View, StyleSheet } from 'react-native';
-import { getAuth } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import app from '../config/firebase';
-
-const auth = getAuth(app); 
-
-export default function TransferScreen({ navigation }) {
-  const [recipient, setRecipient] = useState('');
-  const [amount, setAmount] = useState('');
+export default function PixScreen({ navigation }) {
+  const [pixAmount, setPixAmount] = useState('');
   const [transactionStatus, setTransactionStatus] = useState(null);
-  const [balance, setBalance] = useState(0); 
-
+  const [balance, setBalance] = useState(0);
 
   useEffect(() => {
     const loadBalance = async () => {
@@ -21,7 +15,7 @@ export default function TransferScreen({ navigation }) {
         if (storedBalance !== null) {
           setBalance(parseFloat(storedBalance));
         } else {
-          setBalance(1356.00);
+          setBalance(1356.00); // valor padrão inicial
         }
       } catch (error) {
         console.error('Erro ao carregar o saldo:', error);
@@ -31,49 +25,81 @@ export default function TransferScreen({ navigation }) {
     loadBalance();
   }, []);
 
+  // Função para registrar a transação no histórico
+  const registerTransaction = async (amount, type) => {
+    try {
+      const transaction = {
+        id: new Date().getTime().toString(), // Gera um ID único
+        type,
+        amount,
+        date: new Date().toLocaleString(),
+      };
 
-  const handleTransfer = async () => {
-    const amountValue = parseFloat(amount);
-    if (!isNaN(amountValue) && amountValue > 0 && amountValue <= balance && recipient) {
-      try {
-        const newBalance = balance - amountValue;
-        await AsyncStorage.setItem('balance', newBalance.toFixed(2));
-        setBalance(newBalance);
-        setTransactionStatus('Transferência realizada com sucesso!');
-        setAmount('');
-        setRecipient('');
-      } catch (error) {
-        setTransactionStatus('Erro ao atualizar o saldo.');
-        console.error('Erro ao salvar o saldo:', error);
+      // Recupera o histórico atual
+      const existingTransactions = await AsyncStorage.getItem('transactions');
+      let transactions = existingTransactions ? JSON.parse(existingTransactions) : [];
+
+      // Adiciona a nova transação
+      transactions.push(transaction);
+
+      // Salva de volta no AsyncStorage
+      await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
+
+    } catch (error) {
+      console.error('Erro ao registrar a transação:', error);
+    }
+  };
+
+  const handlePixTransaction = async () => {
+    const amountValue = parseFloat(pixAmount);
+    if (!isNaN(amountValue) && amountValue > 0) {
+      if (amountValue <= balance) {
+        try {
+          const newBalance = balance - amountValue;
+          setTransactionStatus('Pix enviado com sucesso!');
+          await registerTransaction(amountValue, 'send');
+
+          await AsyncStorage.setItem('balance', newBalance.toFixed(2));
+          setBalance(newBalance);
+          setPixAmount('');
+
+          // Navegar para a tela do banco após a transação
+          setTimeout(() => {
+            navigation.navigate('BankScreen'); // Volta automaticamente para BankScreen após 1 segundo
+          }, 1000);
+
+        } catch (error) {
+          setTransactionStatus('Erro ao atualizar o saldo.');
+          console.error('Erro ao salvar o saldo:', error);
+        }
+      } else {
+        setTransactionStatus('Erro: Saldo insuficiente para enviar.');
       }
     } else {
-      setTransactionStatus('Erro: Verifique os dados inseridos ou saldo insuficiente.');
+      setTransactionStatus('Erro: Verifique o valor inserido.');
     }
   };
 
   return (
     <Surface style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Transferência de Dinheiro</Text>
+        <Text style={styles.headerText}>Pix</Text>
       </View>
       <View style={styles.inputContainer}>
-        <TextInput
-          label="Destinatário"
-          mode="outlined"
-          value={recipient}
-          onChangeText={setRecipient}
-          style={styles.input}
-        />
         <TextInput
           label="Valor"
           mode="outlined"
           keyboardType="numeric"
-          value={amount}
-          onChangeText={setAmount}
+          value={pixAmount}
+          onChangeText={setPixAmount}
           style={styles.input}
         />
-        <Button mode="contained" onPress={handleTransfer} style={styles.button}>
-          Realizar Transferência
+        <Button
+          mode="contained"
+          onPress={handlePixTransaction}
+          style={styles.button}
+        >
+          Enviar Pix
         </Button>
         {transactionStatus && (
           <Text style={styles.status}>{transactionStatus}</Text>
@@ -84,7 +110,11 @@ export default function TransferScreen({ navigation }) {
         <Text style={styles.balanceAmount}>R$ {balance.toFixed(2)}</Text>
       </View>
       <View style={styles.bottomActions}>
-        <Button mode="contained" onPress={() => navigation.goBack()} style={styles.button}>
+        <Button
+          mode="contained"
+          onPress={() => navigation.goBack()}
+          style={styles.bottomButton}
+        >
           Voltar
         </Button>
       </View>
@@ -96,17 +126,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#fff',
   },
   header: {
-    backgroundColor: '#a547bf', // Cor alterada
+    backgroundColor: '#a445bd',
     padding: 20,
     borderRadius: 10,
     marginBottom: 20,
+    alignItems: 'center',
   },
   headerText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: 'bold',
   },
   inputContainer: {
@@ -115,11 +146,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   input: {
-    marginBottom: 10,
+    marginBottom: 15,
+    backgroundColor: '#f5f5f5',
   },
   button: {
-    marginTop: 10,
-    backgroundColor: '#a547bf', // Cor alterada
+    backgroundColor: '#a445bd',
+    height: 50,
+    borderRadius: 8,
+    marginTop: 15,
   },
   status: {
     marginTop: 20,
@@ -133,7 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 20,
     borderWidth: 1,
-    borderColor: '#a547bf', // Cor alterada
+    borderColor: '#e0e0e0',
     alignItems: 'center',
   },
   balanceLabel: {
@@ -142,7 +176,7 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   balanceAmount: {
-    color: '#000',
+    color: '#a445bd',
     fontSize: 24,
     fontWeight: 'bold',
   },
@@ -150,5 +184,9 @@ const styles = StyleSheet.create({
     marginTop: 20,
     alignItems: 'center',
   },
+  bottomButton: {
+    backgroundColor: '#a445bd',
+    borderRadius: 8,
+    height: 50,
+  },
 });
-

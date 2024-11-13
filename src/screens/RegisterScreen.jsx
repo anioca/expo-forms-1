@@ -1,11 +1,11 @@
-import { View, Image, TouchableOpacity, Alert } from "react-native";
-import { Button, Surface, Text, TextInput } from "react-native-paper";
+import { View, TouchableOpacity, Alert } from "react-native";
+import { Button, Surface, Text, TextInput, Checkbox } from "react-native-paper";
 import { useState } from "react";
 import { styles } from "../config/styles";
 import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { FontAwesome } from 'react-native-vector-icons';
 import { auth } from "../config/firebase";
-
+ 
 export default function RegisterScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -19,7 +19,8 @@ export default function RegisterScreen({ navigation }) {
     nome: false,
     escola: false,
   });
-
+  const [termosAceitos, setTermosAceitos] = useState(false);  // Estado para o checkbox
+ 
   async function realizaRegistro() {
     if (nome === "") {
       setErro({ ...erro, nome: true });
@@ -45,7 +46,11 @@ export default function RegisterScreen({ navigation }) {
       setErro({ ...erro, escola: true });
       return;
     }
-
+    if (!termosAceitos) {  // Verifica se os termos foram aceitos
+      Alert.alert("Atenção", "Você precisa aceitar os termos e condições para continuar.");
+      return;
+    }
+ 
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
       navigation.navigate("HomeScreen");
@@ -54,15 +59,15 @@ export default function RegisterScreen({ navigation }) {
       Alert.alert("Erro de Registro", "Não foi possível realizar o registro. Tente novamente.");
     }
   }
-
+ 
   async function handleGoogleRegister() {
     const provider = new GoogleAuthProvider();
-
+ 
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
       console.log("Usuário cadastrado com Google:", user);
-      navigation.navigate("HomeScreen"); // Navegar para a HomeScreen após o cadastro com Google
+      navigation.navigate("HomeScreen");
     } catch (error) {
       console.error("Erro ao cadastrar com Google:", error.message);
       Alert.alert(
@@ -71,71 +76,77 @@ export default function RegisterScreen({ navigation }) {
         [
           {
             text: "OK",
-            onPress: () => navigation.navigate("LoginScreen"), // Redireciona para a tela de login
+            onPress: () => navigation.navigate("LoginScreen"),
           },
         ]
       );
     }
   }
-
+ 
   return (
     <Surface style={styles.container}>
       <View style={styles.innerContainer}>
-        <View style={styles.ContainerForm1}>
-          <Text variant="headlineMedium" style={{ textAlign: "center", marginBottom: 20, marginTop:40 }}>
-            Faça seu Registro
-          </Text>
-          <TextInput
-            placeholder="Digite seu nome"
-            value={nome}
-            onChangeText={setNome}
-            style={styles.input}
-            error={erro.nome}
-          />
-          <TextInput
-            placeholder="Digite seu email"
-            value={email}
-            onChangeText={setEmail}
-            style={styles.input}
-            error={erro.email}
-          />
-          <TextInput
-            placeholder="Digite sua senha"
-            value={senha}
-            onChangeText={setSenha}
-            secureTextEntry
-            style={styles.input}
-            error={erro.senha}
-          />
-          <TextInput
-            placeholder="Repita sua senha"
-            value={repetirSenha}
-            onChangeText={setRepetirSenha}
-            secureTextEntry
-            style={styles.input}
-            error={erro.repetirSenha}
-          />
-          <TextInput
-            placeholder="Digite sua Escola"
-            value={escola}
-            onChangeText={setEscola}
-            style={styles.input}
-            error={erro.escola}
-          />
-          <View>
-         <Button onPress={realizaRegistro} style={{ backgroundColor: "#a547bf", marginTop:30 }} mode="contained">
-            Registrar
-          </Button>
-          </View>
-          <View>
-         <TouchableOpacity style={styles.googleButton} onPress={handleGoogleRegister}>
-          <FontAwesome name="google" size={24} color="#8a0b07" />
-         </TouchableOpacity>
-          </View>
-          <Button onPress={() => navigation.navigate("LoginScreen")} style={{ marginTop: 20 }}>
-            Voltar ao login
-          </Button>
+        <View style={styles.header}>
+          <Text style={styles.title}>Sign Up</Text>
         </View>
+       
+        <TextInput
+          placeholder="Name"
+          value={nome}
+          onChangeText={setNome}
+          style={styles.input}
+          error={erro.nome}
+        />
+        <TextInput
+          placeholder="Email"
+          value={email}
+          onChangeText={setEmail}
+          style={styles.input}
+          error={erro.email}
+        />
+        <TextInput
+          placeholder="Password"
+          value={senha}
+          onChangeText={setSenha}
+          secureTextEntry
+          style={styles.input}
+          error={erro.senha}
+        />
+        <TextInput
+          placeholder="Repeat Password"
+          value={repetirSenha}
+          onChangeText={setRepetirSenha}
+          secureTextEntry
+          style={styles.input}
+          error={erro.repetirSenha}
+        />
+       
+        <View style={styles.termsContainer}>
+          <Checkbox
+            status={termosAceitos ? "checked" : "unchecked"} // Status do checkbox
+            onPress={() => setTermosAceitos(!termosAceitos)}  // Altera o estado ao clicar
+          />
+          <Text style={styles.termsText}>
+            Yes, I agree to the <Text style={{ textDecorationLine: "underline" }} onPress={() => navigation.navigate("TermsScreen")}>Terms & Services</Text>.
+          </Text>
+        </View>
+ 
+        <Button onPress={realizaRegistro} style={styles.button} mode="contained">
+          Proceed
+        </Button>
+ 
+        <Text style={{ textAlign: "center", marginTop: 20 }}>Or Sign Up With</Text>
+ 
+        <View style={styles.socialLoginContainer}>
+          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleRegister}>
+            <FontAwesome name="google" size={24} color="#8a0b07" />
+          </TouchableOpacity>
+          {/* Add other social buttons if needed */}
+        </View>
+ 
+        <Text style={styles.loginLink}>
+          Existing User? <Text style={{ textDecorationLine: "underline" }} onPress={() => navigation.navigate("LoginScreen")}>Log In</Text>
+        </Text>
       </View>
     </Surface>
   );

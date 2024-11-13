@@ -1,48 +1,75 @@
-import React from "react";
+import React, { useState } from "react";
 import { Surface, Text, Button } from "react-native-paper";
-import { View, StyleSheet, Image, ScrollView } from "react-native";
+import { View, StyleSheet, Image, ScrollView, Modal, TouchableWithoutFeedback } from "react-native";
 
 export default function EventDetailsScreen({ route, navigation }) {
   const { event, additionalImages } = route.params;
+  const [isImageModalVisible, setIsImageModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const openImageModal = (imageUri) => {
+    setSelectedImage(imageUri);
+    setIsImageModalVisible(true);
+  };
 
   return (
     <Surface style={styles.container}>
-      <View style={styles.imageContainer}>
-        <Image
-          source={{ uri: event.image }}
-          style={styles.image}
-        />
-      </View>
-      <View style={styles.detailsContainer}>
-        <Text style={styles.title}>{event.title}</Text>
-        <Text style={styles.subtitle}>{event.subtitle}</Text>
-        <Text style={styles.date}>{event.date}</Text>
-        <Text style={styles.description}>{event.description}</Text>
-      </View>
+      <ScrollView contentContainerStyle={styles.scrollViewContent}>
+        <View style={styles.imageContainer}>
+          {/* Tornar a imagem da capa clicável para abrir o modal */}
+          <TouchableWithoutFeedback onPress={() => openImageModal(event.image)}>
+            <Image
+              source={{ uri: event.image }}
+              style={styles.image}
+            />
+          </TouchableWithoutFeedback>
+        </View>
+        <View style={styles.detailsContainer}>
+          <Text style={styles.title}>{event.title}</Text>
+          <Text style={styles.subtitle}>{event.subtitle}</Text>
+          <Text style={styles.date}>{event.date}</Text>
+          <Text style={styles.description}>{event.description}</Text>
+        </View>
 
-      <ScrollView>
         <View style={styles.photosContainer}>
           {additionalImages && additionalImages.length > 0 ? (
             additionalImages.map((imageUri, index) => (
-              <Image
-                key={index}
-                source={{ uri: imageUri }}
-                style={styles.additionalImage}
-              />
+              <TouchableWithoutFeedback key={index} onPress={() => openImageModal(imageUri)}>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={styles.additionalImage}
+                />
+              </TouchableWithoutFeedback>
             ))
           ) : (
             <Text style={styles.noImagesText}>Nenhuma imagem adicional disponível.</Text>
           )}
         </View>
+
+        <Button
+          onPress={() => navigation.goBack()}
+          mode="contained"
+          style={styles.button}
+        >
+          Voltar
+        </Button>
       </ScrollView>
 
-      <Button
-        onPress={() => navigation.goBack()}
-        mode="contained"
-        style={styles.button}
+      {/* Modal para exibir a imagem ampliada */}
+      <Modal
+        transparent={true}
+        visible={isImageModalVisible}
+        animationType="fade"
+        onRequestClose={() => setIsImageModalVisible(false)}
       >
-        Voltar
-      </Button>
+        <TouchableWithoutFeedback onPress={() => setIsImageModalVisible(false)}>
+          <View style={styles.modalBackground}>
+            <View style={styles.modalContent}>
+              <Image source={{ uri: selectedImage }} style={styles.modalImage} />
+            </View>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </Surface>
   );
 }
@@ -52,6 +79,9 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F5F5F5',
     padding: 16,
+  },
+  scrollViewContent: {
+    paddingBottom: 100, // Adiciona um pouco de espaço no final do ScrollView
   },
   imageContainer: {
     alignItems: 'center',
@@ -105,5 +135,24 @@ const styles = StyleSheet.create({
     marginTop: 16,
     borderRadius: 30,
     backgroundColor: '#6200EE',
+  },
+  modalBackground: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.8)",  // Fundo escurecido
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: 300,
+    height: 300,
+    backgroundColor: "white",
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalImage: {
+    width: "100%",
+    height: "100%",
+    borderRadius: 10,
   },
 });
