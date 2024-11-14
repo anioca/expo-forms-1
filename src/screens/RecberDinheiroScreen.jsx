@@ -26,29 +26,31 @@ export default function RecberDinheiroScreenScreen({ navigation }) {
   }, []);
 
   // Função para registrar a transação no histórico
-  const registerTransaction = async (amount, type) => {
-    try {
-      const transaction = {
-        id: new Date().getTime().toString(), // Gera um ID único
-        type,
-        amount,
-        date: new Date().toLocaleString(),
-      };
+ const registerTransaction = async (amount, type) => {
+  try {
+    const transaction = {
+      id: new Date().getTime().toString(), // Gera um ID único
+      type,
+      amount,
+      date: new Date().toLocaleString(),
+      amountColor: type === 'deposit' ? '#388e3c' : '#d32f2f', // Adiciona a cor verde para depósitos
+    };
 
-      // Recupera o histórico atual
-      const existingTransactions = await AsyncStorage.getItem('transactions');
-      let transactions = existingTransactions ? JSON.parse(existingTransactions) : [];
+    // Recupera o histórico atual
+    const existingTransactions = await AsyncStorage.getItem('transactions');
+    let transactions = existingTransactions ? JSON.parse(existingTransactions) : [];
 
-      // Adiciona a nova transação
-      transactions.push(transaction);
+    // Adiciona a nova transação
+    transactions.push(transaction);
 
-      // Salva de volta no AsyncStorage
-      await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
+    // Salva de volta no AsyncStorage
+    await AsyncStorage.setItem('transactions', JSON.stringify(transactions));
 
-    } catch (error) {
-      console.error('Erro ao registrar a transação:', error);
-    }
-  };
+  } catch (error) {
+    console.error('Erro ao registrar a transação:', error);
+  }
+};
+
 
   const handleAddMoney = async () => {
     const amountValue = parseFloat(amount);

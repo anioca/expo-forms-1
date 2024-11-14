@@ -3,7 +3,7 @@ import { Surface, Text, Button, TextInput } from 'react-native-paper';
 import { View, StyleSheet } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function PixScreen({ navigation }) {
+export default function TransferirScreen({ navigation }) {
   const [pixAmount, setPixAmount] = useState('');
   const [transactionStatus, setTransactionStatus] = useState(null);
   const [balance, setBalance] = useState(0);
