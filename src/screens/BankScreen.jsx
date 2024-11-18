@@ -85,25 +85,40 @@ export default function BankScreen({ navigation }) {
     const amountColor = isBoxTransaction
       ? "#800080"
       : item.type === "add"
-      ? "#388e3c"
-      : "#d32f2f";
+        ? "#388e3c"
+        : "#d32f2f";
     const sign = item.type === "add" ? "+" : "-";
 
+    // Verifica se a transação é a selecionada para mostrar a descrição
+    const isSelected = selectedTransaction && selectedTransaction.id === item.id;
+
     return (
-      <TouchableOpacity
-        style={styles.transactionItem}
-        onPress={() => setSelectedTransaction(item)} // Exibe a descrição ao clicar na transação
-      >
-        <View>
-          <Text style={styles.transactionText}>
-            {item.source === "caixa" ? "Caixinha" : "Pix"}
+      <View>
+        <TouchableOpacity
+          style={styles.transactionItem}
+          onPress={() => setSelectedTransaction(isSelected ? null : item)} // Alterna entre mostrar e ocultar a descrição
+        >
+          <View>
+            <Text style={styles.transactionText}>
+              {item.source === "caixa" ? "Caixinha" : "Pix"}
+            </Text>
+            <Text style={styles.transactionDate}>{item.date}</Text>
+          </View>
+          <Text style={[styles.transactionAmount, { color: amountColor }]}>
+            {sign} R$ {item.amount.toFixed(2)}
           </Text>
-          <Text style={styles.transactionDate}>{item.date}</Text>
-        </View>
-        <Text style={[styles.transactionAmount, { color: amountColor }]}>
-          {sign} R$ {item.amount.toFixed(2)}
-        </Text>
-      </TouchableOpacity>
+        </TouchableOpacity>
+
+        {/* Mostrar descrição somente se a transação for a selecionada */}
+        {isSelected && (
+          <View style={styles.transactionDetails}>
+            <Text style={styles.transactionDetailsText}>Descrição:</Text>
+            <Text style={styles.transactionDetailsContent}>
+              {item.description || "Sem descrição"}
+            </Text>
+          </View>
+        )}
+      </View>
     );
   };
 
@@ -142,6 +157,7 @@ export default function BankScreen({ navigation }) {
             <Text style={styles.actionLabel}>Transferência</Text>
           </TouchableOpacity>
         </View>
+
         {/* Histórico de Transações */}
         <View style={styles.transactionsContainer}>
           <Text style={styles.sectionTitle}>Histórico</Text>
@@ -153,20 +169,10 @@ export default function BankScreen({ navigation }) {
             <FlatList
               data={[...transactions].reverse()}
               renderItem={renderTransactionItem}
-              keyExtractor={(item, index) => index.toString()}
+              keyExtractor={(item, index) => item.id || index.toString()} // Usar ID único para keyExtractor
             />
           )}
         </View>
-
-        {/* Descrição da transação selecionada */}
-        {selectedTransaction && (
-          <View style={styles.transactionDetails}>
-            <Text style={styles.transactionDetailsText}>Descrição:</Text>
-            <Text style={styles.transactionDetailsContent}>
-              {selectedTransaction.description || "Sem descrição"}
-            </Text>
-          </View>
-        )}
       </ScrollView>
 
       {/* Rodapé com botões de navegação */}
@@ -186,6 +192,7 @@ export default function BankScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  // Estilos permanecem os mesmos, só adicionamos um estilo para a descrição da transação
   container: { flex: 1, backgroundColor: "#FFFFFF" },
   scrollViewContent: { padding: 20 },
   header: {
@@ -196,8 +203,51 @@ const styles = StyleSheet.create({
     backgroundColor: "#a767c6",
     padding: 20,
     borderRadius: 15,
-  }, balanceLabel: { fontSize: 16, color: '#a767c6' },
-  balance: { fontSize: 32, fontWeight: 'bold', color: '#a767c6', marginTop: 10 },
+  },
+  welcomeText: { color: "#FFFFFF", fontSize: 14 },
+  userName: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold" },
+  profilePicture: { width: 50, height: 50, borderRadius: 25 },
+  balanceContainer: {
+    alignItems: "center",
+    backgroundColor: "#EFEFF0",
+    padding: 20,
+    borderRadius: 15,
+    marginBottom: 20,
+  },
+  balanceLabel: { fontSize: 16, color: "#a767c6" },
+  balance: { fontSize: 32, fontWeight: "bold", color: "#a767c6", marginTop: 10 },
+  transactionItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#EFEFF0",
+  },
+  transactionText: { fontSize: 14, color: "#333333" },
+  transactionDate: { fontSize: 12, color: "#888888" },
+  transactionAmount: { fontSize: 14, fontWeight: "bold", color: "#333333" },
+  transactionDetails: {
+    padding: 10,
+    backgroundColor: "#f9f9f9",
+    borderRadius: 8,
+    marginTop: 10,
+  },
+  transactionDetailsText: { fontSize: 16, fontWeight: "bold" },
+  transactionDetailsContent: { fontSize: 14, color: "#333" },
+  footer: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    padding: 10,
+    backgroundColor: "#fff",
+    borderTopWidth: 1,
+    borderColor: "#fff",
+  },
+  button: {
+    borderRadius: 8,
+    backgroundColor: "#ffffff",
+    flex: 1,
+    marginHorizontal: 5,
+  },
   actionContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -222,66 +272,4 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#EFEFF0',
   },
-  welcomeText: { color: "#FFFFFF", fontSize: 14 },
-  userName: { color: "#FFFFFF", fontSize: 18, fontWeight: "bold" },
-  profilePicture: { width: 50, height: 50, borderRadius: 25 },
-  balanceContainer: {
-    alignItems: "center",
-    backgroundColor: "#EFEFF0",
-    padding: 20,
-    borderRadius: 15,
-    marginBottom: 20,
-  },
-  balanceLabel: { fontSize: 16, color: "#a767c6" },
-  balance: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#a767c6",
-    marginTop: 10,
-  },
-  transactionsContainer: { marginTop: 20 },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333333",
-    marginBottom: 10,
-  },
-  transactionItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#EFEFF0",
-  },
-  transactionText: { fontSize: 14, color: "#333333" },
-  transactionDate: { fontSize: 12, color: "#888888" },
-  transactionAmount: { fontSize: 14, fontWeight: "bold", color: "#333333" },
-  noTransactionsText: {
-    fontSize: 14,
-    color: "#888888",
-    textAlign: "center",
-    marginTop: 10,
-  },
-  footer: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    padding: 10,
-    backgroundColor: "#fff",
-    borderTopWidth: 1,
-    borderColor: "#fff",
-  },
-  button: {
-    borderRadius: 8,
-    backgroundColor: "#ffffff",
-    flex: 1,
-    marginHorizontal: 5,
-  },
-  transactionDetails: {
-    padding: 10,
-    backgroundColor: "#f9f9f9",
-    borderRadius: 8,
-    marginTop: 10,
-  },
-  transactionDetailsText: { fontSize: 16, fontWeight: "bold" },
-  transactionDetailsContent: { fontSize: 14, color: "#333" },
 });

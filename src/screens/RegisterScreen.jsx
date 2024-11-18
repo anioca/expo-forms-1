@@ -25,17 +25,18 @@ export default function RegisterScreen({ navigation }) {
   const [termosAceitos, setTermosAceitos] = useState(false);
   const [profileImage, setProfileImage] = useState(null); // Estado para imagem de perfil
 
-  // Função para selecionar imagem
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 1,
-    });
-
-    if (!result.canceled) {
-      setProfileImage(result.uri); // Armazenar URI da imagem no estado
+  const handleGoogleRegister = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      // Aqui você pode fazer o que for necessário com os dados do usuário
+      navigation.navigate("HomeScreen");
+    } catch (error) {
+      console.error("Erro ao registrar com Google:", error.message);
     }
   };
+  
 
   async function realizaRegistro() {
     if (nome === "") {
@@ -168,7 +169,7 @@ export default function RegisterScreen({ navigation }) {
         <Text style={{ textAlign: "center", marginTop: 20 }}>Or Sign Up With</Text>
 
         <View style={styles.socialLoginContainer}>
-          <TouchableOpacity style={styles.googleButton} onPress={pickImage}>
+          <TouchableOpacity style={styles.googleButton} onPress={handleGoogleRegister}>
             <FontAwesome name="google" size={24} color="#8a0b07" />
           </TouchableOpacity>
           {/* Add other social buttons if needed */}
