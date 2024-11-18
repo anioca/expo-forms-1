@@ -1,13 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Surface, Text,Button } from 'react-native-paper';
+import { Surface, Text, Button } from 'react-native-paper';
 import { View, StyleSheet, ScrollView, FlatList, TouchableOpacity, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
+import { getFirestore, doc, getDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
 
 export default function BankScreen({ navigation }) {
-  const [balance, setBalance] = useState(1356.00);
+  const auth = getAuth();
+  const db = getFirestore();
+  const [balance, setBalance] = useState(1356.0);
   const [transactions, setTransactions] = useState([]);
+  const [userName, setUserName] = useState("Usuário");
+  const [profileImageUrl, setProfileImageUrl] = useState("https://via.placeholder.com/50");
 
   const loadBalance = async () => {
     const storedBalance = await AsyncStorage.getItem('balance');
@@ -27,10 +33,28 @@ export default function BankScreen({ navigation }) {
     }
   };
 
+  const loadUserData = async () => {
+    try {
+      const userDoc = doc(db, "usuarios", auth.currentUser.uid);
+      const userSnap = await getDoc(userDoc);
+
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        setUserName(data.displayName || "Usuário");
+        setProfileImageUrl(data.profileImageUrl || "https://via.placeholder.com/50");
+      } else {
+        console.error("Documento do usuário não encontrado.");
+      }
+    } catch (error) {
+      console.error("Erro ao carregar dados do Firestore:", error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       loadBalance();
       loadTransactions();
+      loadUserData(); // Carregar nome e imagem do Firestore
     }, [])
   );
 
@@ -59,10 +83,10 @@ export default function BankScreen({ navigation }) {
         <View style={styles.header}>
           <View>
             <Text style={styles.welcomeText}>Bem vindo</Text>
-            <Text style={styles.userName}>Amandha Watanabe</Text>
+            <Text style={styles.userName}>{userName}</Text>
           </View>
           <Image
-            source={{ uri: 'https://via.placeholder.com/50' }}
+            source={{ uri: profileImageUrl }}
             style={styles.profilePicture}
           />
         </View>
@@ -122,7 +146,6 @@ export default function BankScreen({ navigation }) {
         </Button>
       </View>
     </Surface>
-   
   );
 }
 
@@ -166,12 +189,12 @@ const styles = StyleSheet.create({
   },
   balanceLabel: {
     fontSize: 16,
-    color: '#a767c6', // Alterado para roxo #a767c6
+    color: '#a767c6',
   },
   balance: {
     fontSize: 32,
     fontWeight: 'bold',
-    color: '#a767c6', // Alterado para roxo #a767c6
+    color: '#a767c6',
     marginTop: 10,
   },
   actionContainer: {
@@ -182,7 +205,7 @@ const styles = StyleSheet.create({
   actionButton: {
     width: '30%',
     height: 80,
-    backgroundColor: '#a767c6', // Alterada para a cor solicitada
+    backgroundColor: '#a767c6',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
@@ -233,12 +256,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 10,
-    backgroundColor: '#fff',  // Troquei de '#a767c6' para '#fff' para garantir que o fundo seja branco
+    backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderColor: '#fff',  // Garantindo que a borda também seja branca
+    borderColor: '#fff',
   },
-  
-  footerButton: {
-    alignItems: 'center',
+  button: {
+    borderRadius: 8,
+    backgroundColor: '#ffffff',
+    flex: 1,
+    marginHorizontal: 5,
   },
 });
