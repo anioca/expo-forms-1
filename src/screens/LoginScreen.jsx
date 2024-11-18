@@ -3,13 +3,15 @@ import { View, TouchableOpacity, Alert, StyleSheet } from "react-native";
 import { Button, Text, TextInput } from "react-native-paper";
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
 import { FontAwesome } from 'react-native-vector-icons';
-import { auth } from "../config/firebase";
- 
+import { auth, db, storage } from "../config/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState({ email: false, senha: false });
- 
+
   async function realizaLogin() {
     if (email === "") {
       setErro({ ...erro, email: true });
@@ -19,27 +21,43 @@ export default function LoginScreen({ navigation }) {
       setErro({ ...erro, senha: true });
       return;
     }
- 
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, senha);
       const user = userCredential.user;
-      navigation.navigate("HomeScreen");
+      
+      // Verifica se o usuário tem uma foto de perfil no Firestore
+      const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+      if (!userDoc.exists()) {
+        // Se não tiver, redireciona para a tela de adicionar foto de perfil
+        navigation.navigate("AddProfileImageScreen");
+      } else {
+        navigation.navigate("HomeScreen");
+      }
     } catch (error) {
       Alert.alert("Erro de Login", "Verifique suas credenciais.");
     }
   }
- 
+
   async function handleGoogleLogin() {
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
-      navigation.navigate("HomeScreen");
+
+      // Verifica se o usuário tem uma foto de perfil no Firestore
+      const userDoc = await getDoc(doc(db, "usuarios", user.uid));
+      if (!userDoc.exists()) {
+        // Se não tiver, redireciona para a tela de adicionar foto de perfil
+        navigation.navigate("AddProfileImageScreen");
+      } else {
+        navigation.navigate("HomeScreen");
+      }
     } catch (error) {
       Alert.alert("Erro de Login com Google", "Não foi possível logar.");
     }
   }
- 
+
   return (
     <View style={styles.background}>
       <View style={styles.ContainerForm}>
@@ -62,15 +80,15 @@ export default function LoginScreen({ navigation }) {
         <Button onPress={realizaLogin} mode="contained" style={styles.button}>
           Proceed
         </Button>
- 
+
         <Text style={styles.socialText}>Or Log In With</Text>
- 
+
         <View style={styles.socialContainer}>
           <TouchableOpacity style={styles.socialButton} onPress={handleGoogleLogin}>
             <FontAwesome name="google" size={24} color="#DB4437" />
           </TouchableOpacity>
         </View>
- 
+
         <Button onPress={() => navigation.navigate("RegisterScreen")} style={styles.registerButton}>
           Create Account
         </Button>
@@ -78,6 +96,7 @@ export default function LoginScreen({ navigation }) {
     </View>
   );
 }
+
  
 const styles = StyleSheet.create({
   background: {

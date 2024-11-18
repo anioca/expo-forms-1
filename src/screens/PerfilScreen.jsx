@@ -16,6 +16,9 @@ import * as ImagePicker from "expo-image-picker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Image } from "expo-image";
 import { getAuth } from "firebase/auth";
+import { db, storage } from "../config/firebase"; // Certifique-se de importar sua configuração Firebase
+import { doc, setDoc, getDoc } from "firebase/firestore";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 
 const PerfilScreen = () => {
   const navigation = useNavigation();
@@ -26,8 +29,8 @@ const PerfilScreen = () => {
   const [recentPhotos, setRecentPhotos] = useState([]);
   const [aboutText, setAboutText] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [selectedImage, setSelectedImage] = useState(null); // Estado para imagem selecionada
-  const [selectedIndex, setSelectedIndex] = useState(null); // Índice da imagem selecionada
+  const [selectedImage, setSelectedImage] = useState(null); 
+  const [selectedIndex, setSelectedIndex] = useState(null);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -71,15 +74,15 @@ const PerfilScreen = () => {
   };
 
   const openImageModal = (uri, index) => {
-    setSelectedImage(uri);  // Define a imagem selecionada
-    setSelectedIndex(index); // Define o índice da imagem selecionada
-    setIsModalVisible(true); // Abre o modal com a imagem ampliada
+    setSelectedImage(uri);
+    setSelectedIndex(index);
+    setIsModalVisible(true);
   };
 
   const closeImageModal = () => {
-    setSelectedImage(null); // Limpa a imagem selecionada
-    setSelectedIndex(null); // Limpa o índice da imagem selecionada
-    setIsModalVisible(false); // Fecha o modal
+    setSelectedImage(null);
+    setSelectedIndex(null);
+    setIsModalVisible(false);
   };
 
   const addRecentPhoto = async () => {
@@ -122,10 +125,10 @@ const PerfilScreen = () => {
 
   const deleteRecentPhoto = async () => {
     const updatedPhotos = [...recentPhotos];
-    updatedPhotos.splice(selectedIndex, 1); // Remove a foto selecionada
+    updatedPhotos.splice(selectedIndex, 1);
     setRecentPhotos(updatedPhotos);
     await AsyncStorage.setItem("recentPhotos", JSON.stringify(updatedPhotos));
-    setIsModalVisible(false); // Fecha o modal após exclusão
+    setIsModalVisible(false);
   };
 
   const changeProfileImage = async () => {
@@ -137,7 +140,33 @@ const PerfilScreen = () => {
     if (!result.canceled) {
       const selectedUri = result.assets[0].uri;
       setProfileImage(selectedUri);
-      await AsyncStorage.setItem("profileImage", selectedUri);
+      
+      // Fazer upload da imagem para o Firebase Storage
+      const storageRef = ref(storage, `profileImages/${auth.currentUser.uid}`);
+      const response = await fetch(selectedUri);
+      const blob = await response.blob();
+      const uploadTask = uploadBytesResumable(storageRef, blob);
+
+      uploadTask.on(
+        "state_changed",
+        (snapshot) => {
+          // Aqui você pode monitorar o progresso do upload, se necessário
+        },
+        (error) => {
+          console.error("Erro ao fazer upload da imagem:", error);
+        },
+        async () => {
+          // Após o upload, obtenha a URL de download
+          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+          // Atualize o Firestore com a URL da imagem
+          await setDoc(doc(db, "usuarios", auth.currentUser.uid), {
+            profileImageUrl: downloadURL,
+          }, { merge: true });
+
+          // Armazenar a URL no AsyncStorage também
+          await AsyncStorage.setItem("profileImage", downloadURL);
+        }
+      );
     }
   };
 
@@ -245,6 +274,7 @@ const PerfilScreen = () => {
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

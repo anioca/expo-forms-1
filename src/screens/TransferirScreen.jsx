@@ -121,7 +121,6 @@ export default function TransferirScreen({ navigation }) {
         >
           Voltar
         </Button>
-        F
       </View>
     </Surface>
   );
@@ -136,20 +135,9 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     alignItems: "center",
   },
-  headerText: { 
-    color: "#fff", 
-    fontSize: 22, 
-    fontWeight: "bold" 
-  },
-  inputContainer: { 
-    flex: 1, 
-    justifyContent: "center", 
-    paddingHorizontal: 10 
-  },
-  input: { 
-    marginBottom: 15, 
-    backgroundColor: "#f5f5f5" 
-  },
+  headerText: { color: "#fff", fontSize: 22, fontWeight: "bold" },
+  inputContainer: { flex: 1, justifyContent: "center", paddingHorizontal: 10 },
+  input: { marginBottom: 15, backgroundColor: "#f5f5f5" },
   button: {
     backgroundColor: "#a445bd",
     height: 50,
@@ -171,23 +159,8 @@ const styles = StyleSheet.create({
     borderColor: "#e0e0e0",
     alignItems: "center",
   },
-  balanceLabel: { 
-    color: "#444", 
-    fontSize: 16, 
-    marginBottom: 5 
-  },
-  balanceAmount: { 
-    color: "#a445bd", 
-    fontSize: 24, 
-    fontWeight: "bold" 
-  },
-  bottomActions: { 
-    marginTop: 20, 
-    alignItems: "center" 
-  },
-  bottomButton: { 
-    backgroundColor: "#a445bd", 
-    borderRadius: 8, 
-    height: 50 
-  },
+  balanceLabel: { color: "#444", fontSize: 16, marginBottom: 5 },
+  balanceAmount: { color: "#a445bd", fontSize: 24, fontWeight: "bold" },
+  bottomActions: { marginTop: 20, alignItems: "center" },
+  bottomButton: { backgroundColor: "#a445bd", borderRadius: 8, height: 50 },
 });
